@@ -6,6 +6,8 @@ from io import BytesIO
 from zipfile import ZipFile
 import xmltodict
 from pymongo import MongoClient
+from pymongo.errors import OperationFailure
+
 
 app = FastAPI()
 
@@ -14,6 +16,7 @@ MONGO_PASS = os.getenv("MONGO_PASS")
 MONGO_HOST = os.getenv("MONGO_HOST", "localhost:27017")
 MONGO_DB = "EDO"
 MONGO_COLLECTION = "schf"
+
 
 if not MONGO_USER or not MONGO_PASS:
     raise RuntimeError("MONGO_USER and MONGO_PASS environment variables must be set")
