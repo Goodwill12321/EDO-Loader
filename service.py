@@ -22,7 +22,7 @@ if not MONGO_USER or not MONGO_PASS:
     raise RuntimeError("MONGO_USER and MONGO_PASS environment variables must be set")
 
 # Формируем строку подключения с авторизацией
-MONGO_URI = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}/{MONGO_DB}?authSource={MONGO_DB}"
+MONGO_URI = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}/{MONGO_DB}?authSource=admin"
 
 try:
     mongo_client = MongoClient(MONGO_URI)
