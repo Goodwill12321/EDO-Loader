@@ -9,10 +9,9 @@ from pymongo import MongoClient
 
 app = FastAPI()
 
-# Читаем логин, пароль и хост Mongo из переменных окружения
 MONGO_USER = os.getenv("MONGO_USER")
 MONGO_PASS = os.getenv("MONGO_PASS")
-MONGO_HOST = os.getenv("MONGO_HOST", "localhost:27017")  # по умолчанию локальный хост с портом
+MONGO_HOST = os.getenv("MONGO_HOST", "localhost:27017")
 MONGO_DB = "EDO"
 MONGO_COLLECTION = "schf"
 
@@ -22,9 +21,13 @@ if not MONGO_USER or not MONGO_PASS:
 # Формируем строку подключения с авторизацией
 MONGO_URI = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}/{MONGO_DB}?authSource={MONGO_DB}"
 
-mongo_client = MongoClient(MONGO_URI)
-db = mongo_client[MONGO_DB]
-collection = db[MONGO_COLLECTION]
+try:
+    mongo_client = MongoClient(MONGO_URI)
+    db = mongo_client[MONGO_DB]
+    collection = db[MONGO_COLLECTION]
+except OperationFailure as e:
+    # Тут может быть обработка при инициализации, но обычно ошибки при первой операции
+    pass
 
 class LoadXMLRequest(BaseModel):
     url: str
@@ -45,10 +48,16 @@ async def load_xml(request: LoadXMLRequest):
             xml_content = xml_file.read()
 
         xml_dict = xmltodict.parse(xml_content)
-        collection.insert_one(xml_dict)
+        try:
+            collection.insert_one(xml_dict)
+        except OperationFailure as e:
+            msg = f"MongoDB auth error: {str(e)}. Tried URI: {MONGO_URI}"
+            raise HTTPException(status_code=500, detail=msg)
 
         return {"status": "success", "message": f"XML data inserted from {xml_file_name}"}
     except requests.RequestException as e:
         raise HTTPException(status_code=400, detail=f"HTTP error: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
